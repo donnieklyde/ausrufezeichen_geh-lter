@@ -62,7 +62,7 @@ fun ProfileScreen() {
                                 MarketItem(
                                     id = card.id,
                                     text = card.text,
-                                    imageUrl = if (card.backgroundUrl.startsWith("/")) "http://10.0.2.2:3000${card.backgroundUrl}" else card.backgroundUrl,
+                                    imageUrl = if (card.backgroundUrl.startsWith("/")) "https://ausrufezeichen-geh-lter.vercel.app${card.backgroundUrl}" else card.backgroundUrl,
                                     price = card.price.toString(),
                                     owner = card.owner?.username ?: "You",
                                     isListed = card.isListed
@@ -120,7 +120,7 @@ fun ProfileScreen() {
                                         MarketItem(
                                             id = card.id,
                                             text = card.text,
-                                            imageUrl = if (card.backgroundUrl.startsWith("/")) "http://10.0.2.2:3000${card.backgroundUrl}" else card.backgroundUrl,
+                                            imageUrl = if (card.backgroundUrl.startsWith("/")) "https://ausrufezeichen-geh-lter.vercel.app${card.backgroundUrl}" else card.backgroundUrl,
                                             price = card.price.toString(),
                                             owner = card.owner?.username ?: "You",
                                             isListed = card.isListed

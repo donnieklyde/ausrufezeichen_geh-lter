@@ -67,7 +67,7 @@ fun MarketplaceScreen() {
                     id = card.id,
                     text = card.text,
                     // Use 10.0.2.2 or local IP if running on emulator/device
-                    imageUrl = if (card.backgroundUrl.startsWith("/")) "http://10.0.2.2:3000${card.backgroundUrl}" else card.backgroundUrl,
+                    imageUrl = if (card.backgroundUrl.startsWith("/")) "https://ausrufezeichen-geh-lter.vercel.app${card.backgroundUrl}" else card.backgroundUrl,
                     price = card.price.toString(),
                     owner = card.owner?.username ?: "Unknown",
                     isListed = card.isListed

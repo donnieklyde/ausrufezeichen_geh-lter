@@ -11,5 +11,5 @@ data class Card(
 )
 
 data class UserDto(
-    val username: String
+    val username: String?
 )

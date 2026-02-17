@@ -25,6 +25,7 @@ model Card {
   text          String   @unique
   backgroundUrl String
   price         Float    @default(0.0)
+  copies        Int      @default(1)
   isListed      Boolean  @default(false)
   
   ownerId       String

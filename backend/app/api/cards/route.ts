@@ -8,22 +8,43 @@ export async function GET(request: Request) {
     try {
         const { searchParams } = new URL(request.url);
         const mode = searchParams.get('mode'); // 'market' or 'my'
-        // In a real app, strict user ID check would be here.
-        const userId = "demo-user-id";
+
+        // Authenticate user if possible (required for 'my' mode)
+        let userId: string | null = null;
+        const authHeader = request.headers.get("Authorization");
+        if (authHeader && authHeader.startsWith("Bearer ")) {
+            const token = authHeader.split(" ")[1];
+            try {
+                const decoded = jwt.verify(token, process.env.JWT_SECRET || "super-secret-key-change-me") as { userId: string };
+                userId = decoded.userId;
+            } catch (e) {
+                // Token invalid, ignore for public market view but critical for 'my' view
+            }
+        }
 
         let whereClause: any = { isListed: true };
 
         if (mode === 'my') {
+            if (!userId) {
+                return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+            }
             whereClause = { ownerId: userId };
         }
 
         const cards = await prisma.card.findMany({
             where: whereClause,
             orderBy: { createdAt: 'desc' },
-            include: { owner: true }
+            include: {
+                owner: {
+                    select: {
+                        username: true
+                    }
+                }
+            }
         });
         return NextResponse.json(cards);
     } catch (error) {
+        console.error(error);
         return NextResponse.json({ error: 'Failed to fetch cards' }, { status: 500 });
     }
 }
@@ -46,6 +67,7 @@ export async function POST(request: Request) {
         const data = await request.formData();
         const text = data.get('text') as string;
         const priceStr = data.get('price') as string;
+        const copiesStr = data.get('copies') as string;
         const isListedStr = data.get('isListed') as string;
         const file = data.get('file') as File;
 
@@ -60,6 +82,7 @@ export async function POST(request: Request) {
         const fileUrl = `data:${file.type};base64,${base64}`;
 
         const price = parseFloat(priceStr) || 0.0;
+        const copies = parseInt(copiesStr) || 1;
         const isListed = isListedStr === 'true';
 
         const card = await prisma.card.create({
@@ -67,6 +90,7 @@ export async function POST(request: Request) {
                 text,
                 backgroundUrl: fileUrl,
                 price,
+                copies,
                 isListed: isListed,
                 ownerId: userId,
                 creatorId: userId

@@ -250,6 +250,8 @@ fun CreatorScreen() {
         
         Spacer(modifier = Modifier.height(16.dp))
 
+        Spacer(modifier = Modifier.height(16.dp))
+
         Text("Set Price: $$priceDetail")
         // Simple mock slider for price
         var priceSlider by remember { mutableStateOf(0f) }
@@ -264,40 +266,40 @@ fun CreatorScreen() {
 
         Spacer(modifier = Modifier.height(16.dp))
 
+        // Copies Slider
+        var copies by remember { mutableStateOf(1f) }
+        Text("Copies: ${copies.toInt()}")
+        Slider(
+            value = copies,
+            onValueChange = { copies = it },
+            valueRange = 1f..100f,
+            steps = 99,
+            modifier = Modifier.fillMaxWidth()
+        )
+
+        Spacer(modifier = Modifier.height(16.dp))
+
         // Actions
-        androidx.compose.foundation.layout.Row(
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
+        Button(
+            onClick = { 
+                coroutineScope.launch {
+                    try {
+                        val finalBitmap = if (optimParams != null) generatedBitmap else generateCardBitmap(context, backgroundUri ?: Uri.EMPTY, cardText, null)
+                        if (finalBitmap != null) {
+                            // saveToGallery(context, finalBitmap) // Optional: Auto-save to gallery? User aid "only save button", implies save to backend/app
+                            uploadCardWithBitmap(context, finalBitmap, cardText, priceSlider, copies.toInt(), true) // Always list/save
+                        }
+                    } catch (e: Exception) {
+                        e.printStackTrace()
+                        withContext(Dispatchers.Main) {
+                             Toast.makeText(context, "Error saving card", Toast.LENGTH_SHORT).show()
+                        }
+                    }
+                }
+            },
             modifier = Modifier.fillMaxWidth()
         ) {
-            Button(
-                onClick = { 
-                    coroutineScope.launch {
-                        val finalBitmap = if (optimParams != null) generatedBitmap else generateCardBitmap(context, backgroundUri ?: Uri.EMPTY, cardText, null)
-                        if (finalBitmap != null) {
-                            saveToGallery(context, finalBitmap)
-                            uploadCardWithBitmap(context, finalBitmap, cardText, priceSlider, false)
-                        }
-                    }
-                },
-                modifier = Modifier.weight(1f)
-            ) {
-                Text("Save")
-            }
-            
-            Button(
-                onClick = { 
-                     coroutineScope.launch {
-                        val finalBitmap = if (optimParams != null) generatedBitmap else generateCardBitmap(context, backgroundUri ?: Uri.EMPTY, cardText, null)
-                        if (finalBitmap != null) {
-                            saveToGallery(context, finalBitmap)
-                            uploadCardWithBitmap(context, finalBitmap, cardText, priceSlider, true)
-                        }
-                    }
-                },
-                modifier = Modifier.weight(1f)
-            ) {
-                Text("Mint & List")
-            }
+             Text("Save")
         }
     }
 }
@@ -592,6 +594,7 @@ fun uploadCardWithBitmap(
     bitmap: Bitmap, 
     text: String, 
     price: Float, 
+    copies: Int,
     isListed: Boolean
 ) {
     kotlinx.coroutines.CoroutineScope(Dispatchers.IO).launch {
@@ -605,10 +608,11 @@ fun uploadCardWithBitmap(
             val body = okhttp3.MultipartBody.Part.createFormData("file", file.name, requestFile)
             val textPart = okhttp3.MultipartBody.Part.createFormData("text", text)
             val pricePart = okhttp3.MultipartBody.Part.createFormData("price", price.toString())
+            val copiesPart = okhttp3.MultipartBody.Part.createFormData("copies", copies.toString())
             val isListedPart = okhttp3.MultipartBody.Part.createFormData("isListed", isListed.toString())
             
             val api = com.poetic.card.network.NetworkModule.api
-            api.uploadCard(textPart, pricePart, isListedPart, body)
+            api.uploadCard(textPart, pricePart, copiesPart, isListedPart, body)
             
             withContext(Dispatchers.Main) {
                 Toast.makeText(context, "Uploaded Successfully", Toast.LENGTH_SHORT).show()
