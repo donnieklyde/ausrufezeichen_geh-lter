@@ -1,14 +1,18 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 
 export const dynamic = 'force-dynamic';
 
+interface Context {
+    params: Promise<{ id: string }>;
+}
+
 export async function PATCH(
-    request: Request,
-    { params }: { params: { id: string } }
+    request: NextRequest,
+    context: Context
 ) {
     try {
-        const id = params.id;
+        const { id } = await context.params;
         const body = await request.json();
         const { isListed, price } = body;
 
@@ -24,5 +28,26 @@ export async function PATCH(
         return NextResponse.json(card);
     } catch (error) {
         return NextResponse.json({ error: 'Failed to update card' }, { status: 500 });
+    }
+}
+
+export async function GET(
+    request: NextRequest,
+    context: Context
+) {
+    try {
+        const { id } = await context.params;
+        const card = await prisma.card.findUnique({
+            where: { id },
+            include: { owner: true, creator: true }
+        });
+
+        if (!card) {
+            return NextResponse.json({ error: "Card not found" }, { status: 404 });
+        }
+
+        return NextResponse.json(card);
+    } catch (e) {
+        return NextResponse.json({ error: "Failed to fetch card" }, { status: 500 });
     }
 }

@@ -98,7 +98,8 @@ export async function POST(req: NextRequest) {
                 username: user.username,
                 email: user.email,
                 picture: user.picture,
-                balance: user.balance
+                balance: user.balance,
+                hasChosenUsername: user.hasChosenUsername
             }
         });
 

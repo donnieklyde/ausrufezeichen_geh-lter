@@ -12,6 +12,7 @@ model User {
   username  String?  @unique
   email     String   @unique
   googleId  String   @unique
+  hasChosenUsername Boolean @default(false)
   picture   String?
   balance   Float    @default(0.0)
   createdAt DateTime @default(now())
