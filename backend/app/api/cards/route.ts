@@ -1,8 +1,7 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import jwt from 'jsonwebtoken';
-import { promises as fs } from 'fs';
-import path from 'path';
+import { put } from '@vercel/blob';
 
 export const dynamic = 'force-dynamic';
 
@@ -77,36 +76,29 @@ export async function POST(request: Request) {
             return NextResponse.json({ error: 'No file uploaded' }, { status: 400 });
         }
 
-        // Save file to disk instead of base64
+        // Upload to Vercel Blob Storage
         const bytes = await file.arrayBuffer();
         const buffer = Buffer.from(bytes);
 
         // Generate unique filename
         const timestamp = Date.now();
         const fileExt = file.name.split('.').pop() || 'png';
-        const fileName = `card_${timestamp}_${Math.random().toString(36).substring(7)}.${fileExt}`;
+        const fileName = `cards / card_${timestamp}_${Math.random().toString(36).substring(7)}.${fileExt} `;
 
-        // Ensure uploads directory exists
-        const uploadsDir = path.join(process.cwd(), 'public', 'uploads');
+        let fileUrl: string;
+
         try {
-            await fs.mkdir(uploadsDir, { recursive: true });
-        } catch (mkdirError) {
-            console.error('Failed to create uploads directory:', mkdirError);
+            // Upload to Vercel Blob
+            const blob = await put(fileName, buffer, {
+                access: 'public',
+                contentType: file.type || 'image/png'
+            });
+            fileUrl = blob.url;
+            console.log('File uploaded to Blob:', fileUrl);
+        } catch (uploadError) {
+            console.error('Failed to upload to Vercel Blob:', uploadError);
+            return NextResponse.json({ error: 'File upload failed' }, { status: 500 });
         }
-
-        const filePath = path.join(uploadsDir, fileName);
-
-        // Write file to disk
-        try {
-            await fs.writeFile(filePath, buffer);
-            console.log('File saved successfully:', filePath);
-        } catch (writeError) {
-            console.error('Failed to write file:', writeError);
-            throw new Error(`File write failed: ${writeError}`);
-        }
-
-        // Store relative URL path (accessible via /uploads/filename)
-        const fileUrl = `/uploads/${fileName}`;
 
         const price = parseFloat(priceStr) || 0.0;
         const copies = parseInt(copiesStr) || 1;
