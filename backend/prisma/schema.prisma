@@ -26,6 +26,7 @@ model Card {
   backgroundUrl String
   price         Float    @default(0.0)
   copies        Int      @default(1)
+  aiRating      Int      @default(0)   // 1-10 scale
   isListed      Boolean  @default(false)
   
   ownerId       String

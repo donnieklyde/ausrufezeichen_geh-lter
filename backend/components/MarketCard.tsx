@@ -5,6 +5,7 @@ interface CardProps {
     text: string;
     backgroundUrl: string;
     price: number;
+    aiRating: number;
     owner: {
         username: string | null;
     } | null;
@@ -40,9 +41,16 @@ export function MarketCard({ card, onClick }: { card: CardProps; onClick?: () =>
                     <span className="text-xs font-medium opacity-80">
                         @{card.owner?.username || "Unknown"}
                     </span>
-                    <span className="font-bold text-amber-400">
-                        ${Number(card.price).toFixed(2)}
-                    </span>
+                    <div className="flex items-center gap-2">
+                        {card.aiRating > 0 && (
+                            <span className="text-xs font-bold text-purple-400 flex items-center gap-1">
+                                ✨ {card.aiRating}/10
+                            </span>
+                        )}
+                        <span className="font-bold text-amber-400">
+                            ${Number(card.price).toFixed(2)}
+                        </span>
+                    </div>
                 </div>
             </div>
         </div>

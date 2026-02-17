@@ -47,7 +47,8 @@ interface ApiService {
 object NetworkModule {
     // For Emulator: 10.0.2.2 points to host localhost
     // For Physical Device: Use local IP of computer (e.g. 192.168.1.x)
-    private const val BASE_URL = "https://ausrufezeichen-geh-lter.vercel.app/"
+    // const val BASE_URL = "https://ausrufezeichen-geh-lter.vercel.app/"
+    const val BASE_URL = "http://10.0.2.2:3000/" // Local Development
 
     private val client = OkHttpClient.Builder()
         .connectTimeout(60, java.util.concurrent.TimeUnit.SECONDS)

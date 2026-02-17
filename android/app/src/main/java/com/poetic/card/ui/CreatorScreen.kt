@@ -101,9 +101,9 @@ data class OptimizationParams(
                 contrast = Random.nextFloat() * 0.8f + 0.8f, // 0.8 - 1.6
                 brightness = Random.nextFloat() * 60f - 10f, // -10 - 50
                 saturation = Random.nextFloat() * 1.5f, // 0 - 1.5
-                redShiftX = Random.nextFloat() * 0.04f - 0.02f, // +/- 2%
-                blueShiftX = Random.nextFloat() * 0.04f - 0.02f,
-                noiseAlpha = Random.nextInt(10, 50),
+                redShiftX = Random.nextFloat() * 0.08f - 0.04f, // +/- 4% (Boosted)
+                blueShiftX = Random.nextFloat() * 0.08f - 0.04f,
+                noiseAlpha = Random.nextInt(20, 80), // More noise
                 flareX = Random.nextFloat(), 
                 flareY = Random.nextFloat(),
                 flareRadius = Random.nextFloat() * 0.5f + 0.1f,
@@ -459,8 +459,9 @@ suspend fun generateCardBitmap(
         // Center: layoutWidth is width*0.8. Margin is width*0.1.
         sourceCanvas.translate(width * 0.1f, height / 2f - staticLayoutFill.height / 2f)
         
-        // Draw Outline then Fill
-        staticLayoutOutline.draw(sourceCanvas)
+        // Draw Fill Only (White)
+        // Removed Outline
+        // staticLayoutOutline.draw(sourceCanvas) 
         staticLayoutFill.draw(sourceCanvas)
         
         sourceCanvas.restore()

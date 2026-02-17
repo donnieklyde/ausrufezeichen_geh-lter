@@ -62,10 +62,11 @@ fun ProfileScreen() {
                                 MarketItem(
                                     id = card.id,
                                     text = card.text,
-                                    imageUrl = if (card.backgroundUrl.startsWith("/")) "https://ausrufezeichen-geh-lter.vercel.app${card.backgroundUrl}" else card.backgroundUrl,
+                                    imageUrl = if (card.backgroundUrl.startsWith("/")) "${NetworkModule.BASE_URL}${card.backgroundUrl.removePrefix("/")}" else card.backgroundUrl,
                                     price = card.price.toString(),
                                     owner = card.owner?.username ?: "You",
-                                    isListed = card.isListed
+                                    isListed = card.isListed,
+                                    aiRating = card.aiRating
                                 )
                             }
                             isLoading = false
@@ -120,10 +121,11 @@ fun ProfileScreen() {
                                         MarketItem(
                                             id = card.id,
                                             text = card.text,
-                                            imageUrl = if (card.backgroundUrl.startsWith("/")) "https://ausrufezeichen-geh-lter.vercel.app${card.backgroundUrl}" else card.backgroundUrl,
+                                            imageUrl = if (card.backgroundUrl.startsWith("/")) "${NetworkModule.BASE_URL}${card.backgroundUrl.removePrefix("/")}" else card.backgroundUrl,
                                             price = card.price.toString(),
                                             owner = card.owner?.username ?: "You",
-                                            isListed = card.isListed
+                                            isListed = card.isListed,
+                                            aiRating = card.aiRating
                                         )
                                     }
                                 }
@@ -173,8 +175,16 @@ fun ProfileCard(item: MarketItem, onList: () -> Unit) {
                     fontSize = 14.sp,
                     maxLines = 2
                 )
+                if (item.aiRating > 0) {
+                    Text(
+                        text = "✨ ${'$'}{item.aiRating}/10",
+                        color = Color(0xFFCE93D8), // Purple 200
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 12.sp
+                    )
+                }
                 Text(
-                    text = "$${item.price}",
+                    text = "$${'$'}{item.price}",
                     color = Color.Yellow,
                     fontWeight = FontWeight.Bold,
                     fontSize = 12.sp
