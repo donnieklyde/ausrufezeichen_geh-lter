@@ -6,13 +6,11 @@ import { ReactNode } from "react";
 export function Providers({ children }: { children: ReactNode }) {
     const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
 
-    if (!clientId) {
-        console.error("Missing NEXT_PUBLIC_GOOGLE_CLIENT_ID");
-        return <>{children}</>;
-    }
+    // Fallback for build time if missing (prevents crash, but login won't work without real ID)
+    const effectiveClientId = clientId || "dummy-client-id-for-build";
 
     return (
-        <GoogleOAuthProvider clientId={clientId}>
+        <GoogleOAuthProvider clientId={effectiveClientId}>
             {children}
         </GoogleOAuthProvider>
     );
