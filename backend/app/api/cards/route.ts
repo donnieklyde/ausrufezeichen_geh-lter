@@ -85,10 +85,25 @@ export async function POST(request: Request) {
         const timestamp = Date.now();
         const fileExt = file.name.split('.').pop() || 'png';
         const fileName = `card_${timestamp}_${Math.random().toString(36).substring(7)}.${fileExt}`;
-        const filePath = path.join(process.cwd(), 'public', 'uploads', fileName);
+
+        // Ensure uploads directory exists
+        const uploadsDir = path.join(process.cwd(), 'public', 'uploads');
+        try {
+            await fs.mkdir(uploadsDir, { recursive: true });
+        } catch (mkdirError) {
+            console.error('Failed to create uploads directory:', mkdirError);
+        }
+
+        const filePath = path.join(uploadsDir, fileName);
 
         // Write file to disk
-        await fs.writeFile(filePath, buffer);
+        try {
+            await fs.writeFile(filePath, buffer);
+            console.log('File saved successfully:', filePath);
+        } catch (writeError) {
+            console.error('Failed to write file:', writeError);
+            throw new Error(`File write failed: ${writeError}`);
+        }
 
         // Store relative URL path (accessible via /uploads/filename)
         const fileUrl = `/uploads/${fileName}`;
