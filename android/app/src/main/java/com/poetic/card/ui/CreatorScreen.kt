@@ -133,8 +133,10 @@ fun CreatorScreen() {
     val launcher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
     ) { uri: Uri? ->
-        backgroundUri = uri
-        optimParams = null // Reset on new image
+        if (uri != null) {
+            backgroundUri = uri
+            optimParams = null // Reset on new image
+        }
     }
     
     // Effect to regenerate bitmap when params change
