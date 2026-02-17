@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import jwt from 'jsonwebtoken';
+import { promises as fs } from 'fs';
+import path from 'path';
 
 export const dynamic = 'force-dynamic';
 
@@ -75,11 +77,21 @@ export async function POST(request: Request) {
             return NextResponse.json({ error: 'No file uploaded' }, { status: 400 });
         }
 
-        // Vercel Storage Fix: Store as Data URI in the database
+        // Save file to disk instead of base64
         const bytes = await file.arrayBuffer();
         const buffer = Buffer.from(bytes);
-        const base64 = buffer.toString('base64');
-        const fileUrl = `data:${file.type};base64,${base64}`;
+
+        // Generate unique filename
+        const timestamp = Date.now();
+        const fileExt = file.name.split('.').pop() || 'png';
+        const fileName = `card_${timestamp}_${Math.random().toString(36).substring(7)}.${fileExt}`;
+        const filePath = path.join(process.cwd(), 'public', 'uploads', fileName);
+
+        // Write file to disk
+        await fs.writeFile(filePath, buffer);
+
+        // Store relative URL path (accessible via /uploads/filename)
+        const fileUrl = `/uploads/${fileName}`;
 
         const price = parseFloat(priceStr) || 0.0;
         const copies = parseInt(copiesStr) || 1;
