@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { MarketCard } from "@/components/MarketCard";
+import { Card3DModal } from "@/components/Card3DModal";
 import { useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
 
@@ -19,6 +20,7 @@ export default function ProfilePage() {
     const router = useRouter();
     const [user, setUser] = useState<UserProfile | null>(null);
     const [loading, setLoading] = useState(true);
+    const [selectedCard, setSelectedCard] = useState<any | null>(null);
 
     useEffect(() => {
         const token = localStorage.getItem("user_token");
@@ -85,7 +87,11 @@ export default function ProfilePage() {
                     ) : (
                         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
                             {user.cards.map(card => (
-                                <MarketCard key={card.id} card={card} />
+                                <MarketCard
+                                    key={card.id}
+                                    card={card}
+                                    onClick={() => setSelectedCard(card)}
+                                />
                             ))}
                         </div>
                     )}
@@ -99,12 +105,26 @@ export default function ProfilePage() {
                     ) : (
                         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
                             {user.created.map(card => (
-                                <MarketCard key={card.id} card={card} />
+                                <MarketCard
+                                    key={card.id}
+                                    card={card}
+                                    onClick={() => setSelectedCard(card)}
+                                />
                             ))}
                         </div>
                     )}
                 </div>
             </div>
-        </main>
+
+
+            {
+                selectedCard && (
+                    <Card3DModal
+                        card={selectedCard}
+                        onClose={() => setSelectedCard(null)}
+                    />
+                )
+            }
+        </main >
     );
 }

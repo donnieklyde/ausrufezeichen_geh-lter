@@ -47,8 +47,8 @@ fun LoginScreen(onLoginSuccess: () -> Unit) {
                         val credentialManager = CredentialManager.create(context)
                         Log.d("LoginScreen", "CredentialManager created")
                         
-                        // NOTE: Replace with your actual Web Client ID from Google Cloud Console
-                        val webClientId = "29909492289-jhmosno5g8q1q41b1lis6un6pt767g7n.apps.googleusercontent.com"
+                        // NOTE: Replace with    // Updated Client ID from User
+                        val webClientId = "29909492289-hvs6o03l1kc1q42busue4oe4gjfat34s.apps.googleusercontent.com"
 
                         val googleIdOption = GetGoogleIdOption.Builder()
                             .setFilterByAuthorizedAccounts(false)

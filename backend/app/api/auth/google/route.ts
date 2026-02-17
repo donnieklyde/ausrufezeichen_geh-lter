@@ -45,9 +45,13 @@ export async function POST(req: NextRequest) {
 
             if (user) {
                 // Link Google ID
+                const updateData: any = { googleId, picture };
+                if (!user.username) {
+                    updateData.username = name || email.split("@")[0];
+                }
                 user = await prisma.user.update({
                     where: { email },
-                    data: { googleId, picture }
+                    data: updateData
                 });
             } else {
                 // Create new user

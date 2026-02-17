@@ -13,5 +13,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "PoeticCardMarket"
+rootProject.name = "RetardedCardMarket"
 include(":app")

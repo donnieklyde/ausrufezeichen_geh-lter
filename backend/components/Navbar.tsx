@@ -60,7 +60,7 @@ export function Navbar() {
         <nav className="border-b border-zinc-200 dark:border-zinc-800 bg-white dark:bg-black p-4">
             <div className="max-w-5xl mx-auto flex items-center justify-between">
                 <Link href="/" className="text-xl font-bold tracking-tighter">
-                    Poetic Card Market
+                    slikkroad
                 </Link>
 
                 {sessionToken ? (

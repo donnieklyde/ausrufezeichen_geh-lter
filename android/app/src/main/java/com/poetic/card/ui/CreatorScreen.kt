@@ -118,7 +118,7 @@ data class OptimizationParams(
 
 @Composable
 fun CreatorScreen() {
-    var cardText by remember { mutableStateOf("Your Poetry Here") }
+    var cardText by remember { mutableStateOf("Your Autism Here") }
     var backgroundUri by remember { mutableStateOf<Uri?>(null) }
     var priceDetail by remember { mutableStateOf("0.00") }
     
@@ -563,7 +563,7 @@ suspend fun generateCardBitmap(
 }
 
 fun saveToGallery(context: Context, bitmap: Bitmap) {
-    val filename = "poetic_card_${System.currentTimeMillis()}.png"
+    val filename = "dumb_card_${System.currentTimeMillis()}.png"
     val fos: OutputStream?
     
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
@@ -571,7 +571,7 @@ fun saveToGallery(context: Context, bitmap: Bitmap) {
         val contentValues = ContentValues().apply {
             put(MediaStore.MediaColumns.DISPLAY_NAME, filename)
             put(MediaStore.MediaColumns.MIME_TYPE, "image/png")
-            put(MediaStore.MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_PICTURES + "/PoeticCards")
+            put(MediaStore.MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_PICTURES + "/RetardedCards")
         }
         val imageUri = resolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, contentValues)
         fos = imageUri?.let { resolver.openOutputStream(it) }

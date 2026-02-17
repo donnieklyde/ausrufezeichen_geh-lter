@@ -19,10 +19,12 @@ export async function GET(request: Request) {
             where: { id: decoded.userId },
             include: {
                 cards: {
-                    orderBy: { createdAt: "desc" }
+                    orderBy: { createdAt: "desc" },
+                    include: { owner: { select: { username: true } } }
                 },
                 created: {
-                    orderBy: { createdAt: "desc" }
+                    orderBy: { createdAt: "desc" },
+                    include: { owner: { select: { username: true } } }
                 }
             }
         });

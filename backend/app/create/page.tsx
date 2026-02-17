@@ -11,7 +11,7 @@ export default function CreatePage() {
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const imgRef = useRef<HTMLImageElement | null>(null); // Store loaded image
 
-    const [text, setText] = useState("Your\nPoetic\nText");
+    const [text, setText] = useState("Your\nRetarded\nText");
     const [price, setPrice] = useState("0.00");
     const [image, setImage] = useState<File | null>(null);
     const [imagePreview, setImagePreview] = useState<string | null>(null);
@@ -23,6 +23,7 @@ export default function CreatePage() {
     // Load Image when preview changes
     useEffect(() => {
         if (imagePreview) {
+            setImageLoaded(false); // Reset status to trigger update when loaded
             const img = new Image();
             img.src = imagePreview;
             img.onload = () => {
@@ -284,7 +285,7 @@ export default function CreatePage() {
                 <div className="space-y-8 order-2 lg:order-1">
                     <div>
                         <h1 className="text-3xl font-bold tracking-tight mb-2">Create Card</h1>
-                        <p className="text-zinc-500">Design your poetic card.</p>
+                        <p className="text-zinc-500">Design your fucked up card.</p>
                     </div>
 
                     <div className="space-y-6 bg-white dark:bg-zinc-900 p-6 rounded-2xl border border-zinc-200 dark:border-zinc-800">
@@ -297,7 +298,7 @@ export default function CreatePage() {
                                 onChange={(e) => setText(e.target.value)}
                                 className="w-full p-3 rounded-xl bg-zinc-100 dark:bg-zinc-800 border-none resize-none focus:ring-2 ring-black dark:ring-white font-[Bahnschrift] text-sm"
                                 rows={5}
-                                placeholder="Type your poem here..."
+                                placeholder="Type your autism here..."
                             />
                             <p className="text-xs text-zinc-500 mt-2">Newlines will be preserved.</p>
                         </div>

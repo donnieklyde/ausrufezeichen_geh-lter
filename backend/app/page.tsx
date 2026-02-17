@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import { MarketCard } from "@/components/MarketCard";
+import { MarketplaceClient } from "@/components/MarketplaceClient";
 
 export const dynamic = 'force-dynamic';
 
@@ -8,7 +8,7 @@ export default async function Home() {
   let error = null;
 
   try {
-    cards = await prisma.card.findMany({
+    const rawCards = await prisma.card.findMany({
       where: {
         isListed: true,
       },
@@ -23,6 +23,14 @@ export default async function Home() {
         createdAt: "desc",
       },
     });
+
+    cards = rawCards.map(card => ({
+      ...card,
+      createdAt: card.createdAt.toISOString(),
+      updatedAt: card.updatedAt.toISOString(),
+      // Ensure price is a number
+      price: Number(card.price)
+    }));
   } catch (e) {
     console.error("Failed to fetch cards:", e);
     error = "Failed to load marketplace. Database may be initializing.";
@@ -48,11 +56,7 @@ export default async function Home() {
             <p className="text-zinc-500">No cards listed yet. Be the first!</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-            {cards.map((card) => (
-              <MarketCard key={card.id} card={card} />
-            ))}
-          </div>
+          <MarketplaceClient cards={cards} />
         )}
       </div>
     </main>

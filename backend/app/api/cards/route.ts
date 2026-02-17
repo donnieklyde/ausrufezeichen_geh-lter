@@ -1,7 +1,5 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { writeFile, mkdir } from 'fs/promises';
-import path from 'path';
 import jwt from 'jsonwebtoken';
 
 export const dynamic = 'force-dynamic';
@@ -10,6 +8,7 @@ export async function GET(request: Request) {
     try {
         const { searchParams } = new URL(request.url);
         const mode = searchParams.get('mode'); // 'market' or 'my'
+        // In a real app, strict user ID check would be here.
         const userId = "demo-user-id";
 
         let whereClause: any = { isListed: true };
@@ -54,19 +53,12 @@ export async function POST(request: Request) {
             return NextResponse.json({ error: 'No file uploaded' }, { status: 400 });
         }
 
-        // Save file
+        // Vercel Storage Fix: Store as Data URI in the database
         const bytes = await file.arrayBuffer();
         const buffer = Buffer.from(bytes);
+        const base64 = buffer.toString('base64');
+        const fileUrl = `data:${file.type};base64,${base64}`;
 
-        // Ensure upload dir exists
-        const uploadDir = path.join(process.cwd(), 'public', 'uploads');
-        await mkdir(uploadDir, { recursive: true });
-
-        const filename = `${Date.now()}-${file.name.replace(/\s/g, '_')}`;
-        const filepath = path.join(uploadDir, filename);
-        await writeFile(filepath, buffer);
-
-        const fileUrl = `/uploads/${filename}`;
         const price = parseFloat(priceStr) || 0.0;
         const isListed = isListedStr === 'true';
 
@@ -79,15 +71,14 @@ export async function POST(request: Request) {
                 ownerId: userId,
                 creatorId: userId
             }
-        }
         });
 
-    return NextResponse.json(card);
-} catch (error: any) {
-    console.error(error);
-    if (error.code === 'P2002') {
-        return NextResponse.json({ error: 'This poem has already been minted!' }, { status: 409 });
+        return NextResponse.json(card);
+    } catch (error: any) {
+        console.error(error);
+        if (error.code === 'P2002') {
+            return NextResponse.json({ error: 'This poem has already been minted!' }, { status: 409 });
+        }
+        return NextResponse.json({ error: 'Failed to create card' }, { status: 500 });
     }
-    return NextResponse.json({ error: 'Failed to create card' }, { status: 500 });
-}
 }
