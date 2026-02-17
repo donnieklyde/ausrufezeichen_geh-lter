@@ -1,0 +1,37 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  username  String?  @unique
+  email     String   @unique
+  googleId  String   @unique
+  picture   String?
+  balance   Float    @default(0.0)
+  createdAt DateTime @default(now())
+  cards     Card[]   @relation("OwnedCards")
+  created   Card[]   @relation("CreatedCards")
+}
+
+model Card {
+  id            String   @id @default(cuid())
+  text          String
+  backgroundUrl String
+  price         Float    @default(0.0)
+  isListed      Boolean  @default(false)
+  
+  ownerId       String
+  owner         User     @relation("OwnedCards", fields: [ownerId], references: [id])
+  
+  creatorId     String
+  creator       User     @relation("CreatedCards", fields: [creatorId], references: [id])
+  
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
