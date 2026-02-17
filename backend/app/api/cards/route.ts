@@ -79,11 +79,15 @@ export async function POST(request: Request) {
                 ownerId: userId,
                 creatorId: userId
             }
+        }
         });
 
-        return NextResponse.json(card);
-    } catch (error) {
-        console.error(error);
-        return NextResponse.json({ error: 'Failed to create card' }, { status: 500 });
+    return NextResponse.json(card);
+} catch (error: any) {
+    console.error(error);
+    if (error.code === 'P2002') {
+        return NextResponse.json({ error: 'This poem has already been minted!' }, { status: 409 });
     }
+    return NextResponse.json({ error: 'Failed to create card' }, { status: 500 });
+}
 }

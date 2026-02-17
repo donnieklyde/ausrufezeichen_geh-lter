@@ -257,7 +257,10 @@ export default function CreatePage() {
                         body: formData
                     });
 
-                    if (!res.ok) throw new Error("Failed to create card");
+                    if (!res.ok) {
+                        const errorData = await res.json();
+                        throw new Error(errorData.error || "Failed to create card");
+                    }
 
                     // 3. Restore Preview (No Text)
                     drawCanvas(false);
@@ -265,9 +268,9 @@ export default function CreatePage() {
                 }, "image/png");
             }, 10);
 
-        } catch (e) {
+        } catch (e: any) {
             console.error(e);
-            alert("Failed to save card");
+            alert(e.message || "Failed to save card");
             setIsProcessing(false);
             drawCanvas(false);
         }
@@ -305,21 +308,23 @@ export default function CreatePage() {
                                 Visual Effect
                                 <Dice5 size={14} className="text-zinc-400" />
                             </label>
-                            <div className="grid grid-cols-3 gap-2">
-                                {(['none', 'vintage', 'noir', 'chromatic', 'spectral', 'filmburn'] as EffectType[]).map((effect) => (
-                                    <button
-                                        key={effect}
-                                        onClick={() => handleEffectClick(effect)}
-                                        className={`px-3 py-2 rounded-lg text-sm font-medium capitalize transition border ${activeEffect === effect
-                                            ? 'bg-black text-white dark:bg-white dark:text-black border-transparent'
-                                            : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 border-transparent hover:bg-zinc-200 dark:hover:bg-zinc-700'
-                                            }`}
-                                    >
-                                        {effect}
-                                    </button>
-                                ))}
+                            <div className="flex flex-col gap-2">
+                                <button
+                                    onClick={() => {
+                                        const effects: EffectType[] = ['vintage', 'noir', 'chromatic', 'spectral', 'filmburn'];
+                                        const randomEffect = effects[Math.floor(Math.random() * effects.length)];
+                                        setActiveEffect(randomEffect);
+                                        setEffectSeed(Math.random());
+                                    }}
+                                    className="w-full py-3 bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 rounded-xl font-bold hover:bg-zinc-200 dark:hover:bg-zinc-700 transition flex items-center justify-center gap-2"
+                                >
+                                    <Dice5 size={18} />
+                                    <span>Randomize Style</span>
+                                </button>
+                                <p className="text-xs text-center text-zinc-500">
+                                    Current: <span className="capitalize font-medium">{activeEffect}</span>
+                                </p>
                             </div>
-                            <p className="text-xs text-zinc-500 mt-2">Click again to randomize parameters.</p>
                         </div>
 
                         {/* Image Upload */}

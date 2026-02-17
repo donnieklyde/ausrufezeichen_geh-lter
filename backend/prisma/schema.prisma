@@ -22,7 +22,7 @@ model User {
 
 model Card {
   id            String   @id @default(cuid())
-  text          String
+  text          String   @unique
   backgroundUrl String
   price         Float    @default(0.0)
   isListed      Boolean  @default(false)
