@@ -282,27 +282,41 @@ fun CreatorScreen() {
         Spacer(modifier = Modifier.height(16.dp))
 
         // Actions
-        Button(
-            onClick = { 
-                coroutineScope.launch {
-                    try {
-                        val finalBitmap = if (optimParams != null) generatedBitmap else generateCardBitmap(context, backgroundUri ?: Uri.EMPTY, cardText, null)
-                        if (finalBitmap != null) {
-                            // saveToGallery(context, finalBitmap) // Optional: Auto-save to gallery? User aid "only save button", implies save to backend/app
-                            uploadCardWithBitmap(context, finalBitmap, cardText, priceSlider, copies.toInt(), true) // Always list/save
-                        }
-                    } catch (e: Exception) {
-                        e.printStackTrace()
-                        withContext(Dispatchers.Main) {
-                             Toast.makeText(context, "Error saving card", Toast.LENGTH_SHORT).show()
+            Button(
+                onClick = { 
+                    coroutineScope.launch {
+                        isGenerating = true
+                        try {
+                            val finalBitmap = if (optimParams != null) generatedBitmap else generateCardBitmap(context, backgroundUri ?: Uri.EMPTY, cardText, null)
+                            if (finalBitmap != null) {
+                                val success = uploadCardWithBitmap(context, finalBitmap, cardText, priceSlider, copies.toInt(), true)
+                                if (success) {
+                                    // Reset State
+                                    cardText = "Your Autism Here"
+                                    backgroundUri = null
+                                    optimParams = null
+                                    generatedBitmap = null
+                                    priceSlider = 0f
+                                    priceDetail = "0.00"
+                                    copies = 1f
+                                    Toast.makeText(context, "Card Created & Posted!", Toast.LENGTH_SHORT).show()
+                                }
+                            } else {
+                                Toast.makeText(context, "Please select an image first", Toast.LENGTH_SHORT).show()
+                            }
+                        } catch (e: Exception) {
+                            e.printStackTrace()
+                            Toast.makeText(context, "Error saving card: ${e.message}", Toast.LENGTH_SHORT).show()
+                        } finally {
+                            isGenerating = false
                         }
                     }
-                }
-            },
-            modifier = Modifier.fillMaxWidth()
-        ) {
-             Text("Save")
-        }
+                },
+                enabled = !isGenerating,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                 Text(if (isGenerating) "Saving..." else "Save & Post")
+            }
     }
 }
 
@@ -592,36 +606,36 @@ fun saveToGallery(context: Context, bitmap: Bitmap) {
     }
 }
 
-fun uploadCardWithBitmap(
+suspend fun uploadCardWithBitmap(
     context: Context, 
     bitmap: Bitmap, 
     text: String, 
     price: Float, 
     copies: Int,
     isListed: Boolean
-) {
-    kotlinx.coroutines.CoroutineScope(Dispatchers.IO).launch {
-        try {
-            val file = File(context.cacheDir, "upload_optimized.png")
-            val fos = FileOutputStream(file)
-            bitmap.compress(Bitmap.CompressFormat.PNG, 100, fos)
-            fos.close()
+): Boolean = withContext(Dispatchers.IO) {
+    try {
+        val file = File(context.cacheDir, "upload_optimized.jpg")
+        val fos = FileOutputStream(file)
+        bitmap.compress(Bitmap.CompressFormat.JPEG, 70, fos)
+        fos.close()
 
-            val requestFile = file.asRequestBody("image/*".toMediaTypeOrNull())
-            val body = okhttp3.MultipartBody.Part.createFormData("file", file.name, requestFile)
-            val textPart = okhttp3.MultipartBody.Part.createFormData("text", text)
-            val pricePart = okhttp3.MultipartBody.Part.createFormData("price", price.toString())
-            val copiesPart = okhttp3.MultipartBody.Part.createFormData("copies", copies.toString())
-            val isListedPart = okhttp3.MultipartBody.Part.createFormData("isListed", isListed.toString())
-            
-            val api = com.poetic.card.network.NetworkModule.api
-            api.uploadCard(textPart, pricePart, copiesPart, isListedPart, body)
-            
-            withContext(Dispatchers.Main) {
-                Toast.makeText(context, "Uploaded Successfully", Toast.LENGTH_SHORT).show()
-            }
-        } catch (e: Exception) {
-            e.printStackTrace()
+        val requestFile = file.asRequestBody("image/*".toMediaTypeOrNull())
+        val body = okhttp3.MultipartBody.Part.createFormData("file", file.name, requestFile)
+        val textPart = okhttp3.MultipartBody.Part.createFormData("text", text)
+        val pricePart = okhttp3.MultipartBody.Part.createFormData("price", price.toString())
+        val copiesPart = okhttp3.MultipartBody.Part.createFormData("copies", copies.toString())
+        val isListedPart = okhttp3.MultipartBody.Part.createFormData("isListed", isListed.toString())
+        
+        val api = com.poetic.card.network.NetworkModule.api
+        api.uploadCard(textPart, pricePart, copiesPart, isListedPart, body)
+        
+        return@withContext true
+    } catch (e: Exception) {
+        e.printStackTrace()
+        withContext(Dispatchers.Main) {
+            Toast.makeText(context, "Upload Failed: ${e.message}", Toast.LENGTH_LONG).show()
         }
+        return@withContext false
     }
 }
