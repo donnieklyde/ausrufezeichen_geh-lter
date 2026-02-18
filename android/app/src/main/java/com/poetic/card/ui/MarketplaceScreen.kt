@@ -34,6 +34,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.ui.zIndex
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import com.poetic.card.network.NetworkModule
 import com.poetic.card.model.Card
 
@@ -55,7 +58,10 @@ val mockItems = listOf(
 )
 
 @Composable
-fun MarketplaceScreen(onCardClick: (String) -> Unit = {}) {
+fun MarketplaceScreen(
+    onCardClick: (String) -> Unit = {},
+    onBuyClick: (String) -> Unit = {}
+) {
     var cards by remember { mutableStateOf<List<MarketItem>>(emptyList()) }
     var isLoading by remember { mutableStateOf(true) }
 
@@ -101,7 +107,7 @@ fun MarketplaceScreen(onCardClick: (String) -> Unit = {}) {
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 items(cards) { item ->
-                    MarketCard(item, onCardClick)
+                    MarketCard(item, onCardClick, onBuyClick)
                 }
             }
         }
@@ -109,11 +115,14 @@ fun MarketplaceScreen(onCardClick: (String) -> Unit = {}) {
 }
 
 @Composable
-fun MarketCard(item: MarketItem, onClick: (String) -> Unit) {
+fun MarketCard(
+    item: MarketItem, 
+    onClick: (String) -> Unit,
+    onBuyClick: (String) -> Unit
+) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .aspectRatio(0.7f)
             .aspectRatio(0.7f)
             .clickable { onClick(item.imageUrl) },
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
@@ -157,6 +166,22 @@ fun MarketCard(item: MarketItem, onClick: (String) -> Unit) {
                     color = Color.White.copy(alpha = 0.8f),
                     fontSize = 10.sp
                 )
+            }
+            
+            // Buy Button
+            Button(
+                onClick = { onBuyClick(item.id) },
+                modifier = Modifier
+                    .align(Alignment.BottomEnd)
+                    .padding(8.dp)
+                    .zIndex(1f), // Ensure it's above the card click
+                contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    contentColor = MaterialTheme.colorScheme.onPrimary
+                )
+            ) {
+                Text("Buy", fontSize = 12.sp)
             }
         }
     }

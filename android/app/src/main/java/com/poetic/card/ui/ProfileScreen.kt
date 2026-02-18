@@ -45,7 +45,10 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 @Composable
-fun ProfileScreen(onCardClick: (String) -> Unit = {}) {
+fun ProfileScreen(
+    onCardClick: (String) -> Unit = {},
+    onLogout: () -> Unit = {}
+) {
     var cards by remember { mutableStateOf<List<MarketItem>>(emptyList()) }
     var isLoading by remember { mutableStateOf(true) }
 
@@ -96,6 +99,13 @@ fun ProfileScreen(onCardClick: (String) -> Unit = {}) {
             style = MaterialTheme.typography.headlineMedium,
             modifier = Modifier.padding(bottom = 16.dp)
         )
+        
+        Button(
+            onClick = onLogout,
+            modifier = Modifier.align(Alignment.End)
+        ) {
+            Text("Logout")
+        }
 
         if (isLoading) {
             Text("Loading...", modifier = Modifier.align(Alignment.CenterHorizontally))

@@ -97,10 +97,14 @@ fun MainApp() {
                     ) 
                 }
                 composable("market") { 
+                    val context = androidx.compose.ui.platform.LocalContext.current
                     MarketplaceScreen(
                         onCardClick = { url ->
                             val encodedUrl = java.net.URLEncoder.encode(url, "UTF-8")
                             navController.navigate("detail/$encodedUrl")
+                        },
+                        onBuyClick = { id ->
+                            android.widget.Toast.makeText(context, "Buying coming soon!", android.widget.Toast.LENGTH_SHORT).show()
                         }
                     ) 
                 }
@@ -110,6 +114,12 @@ fun MainApp() {
                          onCardClick = { url ->
                             val encodedUrl = java.net.URLEncoder.encode(url, "UTF-8")
                             navController.navigate("detail/$encodedUrl")
+                        },
+                        onLogout = {
+                            com.poetic.card.network.TokenManager.clearToken()
+                            navController.navigate("login") {
+                                popUpTo(0) { inclusive = true }
+                            }
                         }
                     ) 
                 }
