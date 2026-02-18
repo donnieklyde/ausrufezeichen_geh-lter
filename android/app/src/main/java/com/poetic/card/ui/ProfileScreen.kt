@@ -181,7 +181,7 @@ fun ProfileCard(item: MarketItem, onList: () -> Unit, onClick: () -> Unit) {
                 // Text removed as it is in the image
                 
                 Text(
-                    text = "$${'$'}{item.price}",
+                    text = "$${item.price}",
                     color = Color.Yellow,
                     fontWeight = FontWeight.Bold,
                     fontSize = 12.sp

@@ -3,7 +3,9 @@ package com.poetic.card.ui
 import android.net.Uri
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectDragGestures
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -31,6 +33,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import coil.compose.rememberAsyncImagePainter
@@ -48,10 +51,13 @@ fun CardDetailScreen(
     // Shine Effect State
     var shineOffset by remember { mutableStateOf(Offset.Zero) }
 
+    val interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() }
+
     Box(
         modifier = Modifier
             .fillMaxSize()
             .background(Color.Black.copy(alpha = 0.9f)) // Dark backdrop
+            .clickable(interactionSource = interactionSource, indication = null) { onClose() }
             .pointerInput(Unit) {
                 detectDragGestures(
                     onDragEnd = {
@@ -104,18 +110,22 @@ fun CardDetailScreen(
         )
         */
         
+        val density = LocalDensity.current.density
+        val elevationPx = with(LocalDensity.current) { 20.dp.toPx() }
+        
         // The 3D Card
         Box(
             modifier = Modifier
                 .fillMaxWidth(0.85f) // Large but with padding
                 .aspectRatio(0.7f)
+                .clickable(interactionSource = interactionSource, indication = null) { /* Consume click */ }
                 .graphicsLayer {
-                    rotationX = rotationX
-                    rotationY = rotationY
-                    cameraDistance = 12f * density // Standard camera distance
-                    shadowElevation = 20.dp.toPx()
-                    shape = RoundedCornerShape(24.dp)
-                    clip = true
+                    this.rotationX = rotationX
+                    this.rotationY = rotationY
+                    this.cameraDistance = 12f * density // Standard camera distance
+                    this.shadowElevation = elevationPx
+                    this.shape = RoundedCornerShape(24.dp)
+                    this.clip = true
                 }
                 .background(Color.DarkGray, RoundedCornerShape(24.dp))
         ) {
