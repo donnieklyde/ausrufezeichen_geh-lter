@@ -55,7 +55,7 @@ val mockItems = listOf(
 )
 
 @Composable
-fun MarketplaceScreen() {
+fun MarketplaceScreen(onCardClick: (String) -> Unit = {}) {
     var cards by remember { mutableStateOf<List<MarketItem>>(emptyList()) }
     var isLoading by remember { mutableStateOf(true) }
 
@@ -101,7 +101,7 @@ fun MarketplaceScreen() {
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 items(cards) { item ->
-                    MarketCard(item)
+                    MarketCard(item, onCardClick)
                 }
             }
         }
@@ -109,12 +109,13 @@ fun MarketplaceScreen() {
 }
 
 @Composable
-fun MarketCard(item: MarketItem) {
+fun MarketCard(item: MarketItem, onClick: (String) -> Unit) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
             .aspectRatio(0.7f)
-            .clickable { /* TODO: Open details/buy */ },
+            .aspectRatio(0.7f)
+            .clickable { onClick(item.imageUrl) },
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
         shape = RoundedCornerShape(12.dp)
     ) {
@@ -126,11 +127,16 @@ fun MarketCard(item: MarketItem) {
                 modifier = Modifier.fillMaxSize()
             )
             
-            // Gradient overlay or text background
+            // Gradient overlay at bottom only for text readability
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .background(Color.Black.copy(alpha = 0.3f))
+                    .background(
+                        androidx.compose.ui.graphics.Brush.verticalGradient(
+                            colors = listOf(Color.Transparent, Color.Black.copy(alpha = 0.8f)),
+                            startY = 300f
+                        )
+                    )
             )
 
             Column(
@@ -138,13 +144,8 @@ fun MarketCard(item: MarketItem) {
                     .align(Alignment.BottomStart)
                     .padding(8.dp)
             ) {
-                Text(
-                    text = item.text,
-                    color = Color.White,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 14.sp,
-                    maxLines = 2
-                )
+                 // Removed Text Item Overlay
+                 
                 Text(
                     text = "$${item.price}",
                     color = Color.Yellow,

@@ -96,9 +96,31 @@ fun MainApp() {
                         }
                     ) 
                 }
-                composable("market") { MarketplaceScreen() }
+                composable("market") { 
+                    MarketplaceScreen(
+                        onCardClick = { url ->
+                            val encodedUrl = java.net.URLEncoder.encode(url, "UTF-8")
+                            navController.navigate("detail/$encodedUrl")
+                        }
+                    ) 
+                }
                 composable("create") { CreatorScreen() }
-                composable("profile") { ProfileScreen() }
+                composable("profile") { 
+                    ProfileScreen(
+                         onCardClick = { url ->
+                            val encodedUrl = java.net.URLEncoder.encode(url, "UTF-8")
+                            navController.navigate("detail/$encodedUrl")
+                        }
+                    ) 
+                }
+                
+                composable("detail/{imageUrl}") { backStackEntry ->
+                    val imageUrl = backStackEntry.arguments?.getString("imageUrl") ?: ""
+                    com.poetic.card.ui.CardDetailScreen(
+                        imageUrl = imageUrl,
+                        onClose = { navController.popBackStack() }
+                    )
+                }
             }
         }
     }

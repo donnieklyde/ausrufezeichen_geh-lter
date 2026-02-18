@@ -2,6 +2,7 @@ package com.poetic.card.ui
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -44,7 +45,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 @Composable
-fun ProfileScreen() {
+fun ProfileScreen(onCardClick: (String) -> Unit = {}) {
     var cards by remember { mutableStateOf<List<MarketItem>>(emptyList()) }
     var isLoading by remember { mutableStateOf(true) }
 
@@ -108,30 +109,34 @@ fun ProfileScreen() {
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 items(cards) { item ->
-                    ProfileCard(item) {
-                        // On List Click
-                         CoroutineScope(Dispatchers.IO).launch {
-                            try {
-                                NetworkModule.api.updateCard(item.id, UpdateCardRequest(isListed = true))
-                                // Refresh
-                                val fetched = NetworkModule.api.getMyCards()
-                                withContext(Dispatchers.Main) {
-                                    cards = fetched.map { card ->
-                                        MarketItem(
-                                            id = card.id,
-                                            text = card.text,
-                                            imageUrl = if (card.backgroundUrl.startsWith("/")) "${NetworkModule.BASE_URL}${card.backgroundUrl.removePrefix("/")}" else card.backgroundUrl,
-                                            price = card.price.toString(),
-                                            owner = card.owner?.username ?: "You",
-                                            isListed = card.isListed,
-                                        )
+                    ProfileCard(
+                        item = item, 
+                        onList = {
+                            // On List Click
+                             CoroutineScope(Dispatchers.IO).launch {
+                                try {
+                                    NetworkModule.api.updateCard(item.id, UpdateCardRequest(isListed = true))
+                                    // Refresh
+                                    val fetched = NetworkModule.api.getMyCards()
+                                    withContext(Dispatchers.Main) {
+                                        cards = fetched.map { card ->
+                                            MarketItem(
+                                                id = card.id,
+                                                text = card.text,
+                                                imageUrl = if (card.backgroundUrl.startsWith("/")) "${NetworkModule.BASE_URL}${card.backgroundUrl.removePrefix("/")}" else card.backgroundUrl,
+                                                price = card.price.toString(),
+                                                owner = card.owner?.username ?: "You",
+                                                isListed = card.isListed,
+                                            )
+                                        }
                                     }
+                                } catch (e: Exception) {
+                                    e.printStackTrace()
                                 }
-                            } catch (e: Exception) {
-                                e.printStackTrace()
                             }
-                        }
-                    }
+                        },
+                        onClick = { onCardClick(item.imageUrl) }
+                    )
                 }
             }
         }
@@ -139,11 +144,12 @@ fun ProfileScreen() {
 }
 
 @Composable
-fun ProfileCard(item: MarketItem, onList: () -> Unit) {
+fun ProfileCard(item: MarketItem, onList: () -> Unit, onClick: () -> Unit) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .aspectRatio(0.7f),
+            .aspectRatio(0.7f)
+            .clickable { onClick() },
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
         shape = RoundedCornerShape(12.dp)
     ) {
@@ -155,10 +161,16 @@ fun ProfileCard(item: MarketItem, onList: () -> Unit) {
                 modifier = Modifier.fillMaxSize()
             )
             
+            // Bottom Gradient for readability
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .background(Color.Black.copy(alpha = 0.3f))
+                    .background(
+                         androidx.compose.ui.graphics.Brush.verticalGradient(
+                            colors = listOf(Color.Transparent, Color.Black.copy(alpha = 0.8f)),
+                            startY = 300f
+                        )
+                    )
             )
 
             Column(
@@ -166,13 +178,8 @@ fun ProfileCard(item: MarketItem, onList: () -> Unit) {
                     .align(Alignment.BottomStart)
                     .padding(8.dp)
             ) {
-                Text(
-                    text = item.text,
-                    color = Color.White,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 14.sp,
-                    maxLines = 2
-                )
+                // Text removed as it is in the image
+                
                 Text(
                     text = "$${'$'}{item.price}",
                     color = Color.Yellow,
