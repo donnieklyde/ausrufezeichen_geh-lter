@@ -104,8 +104,6 @@ export async function POST(request: Request) {
         const copies = parseInt(copiesStr) || 1;
         const isListed = isListedStr === 'true';
 
-        // Get AI Rating
-        const aiRating = await getGeminiRating(text);
 
         const card = await prisma.card.create({
             data: {
@@ -116,7 +114,6 @@ export async function POST(request: Request) {
                 isListed: isListed,
                 ownerId: userId,
                 creatorId: userId,
-                aiRating: aiRating
             }
         });
 
@@ -130,38 +127,3 @@ export async function POST(request: Request) {
     }
 }
 
-async function getGeminiRating(text: string): Promise<number> {
-    try {
-        const apiKey = "AIzaSyCk24QOG71kuOcwnXx0VJTMfjNFseIaxWI"; // Hardcoded for now as requested
-        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${apiKey}`;
-
-        const payload = {
-            contents: [{
-                parts: [{
-                    text: `Rate the poetic value and soul of the following text on a strict scale from 1 to 10. 
-                    Be critical but fair. Return ONLY the integer number. Nothing else.
-                    
-                    Text: "${text}"`
-                }]
-            }]
-        };
-
-        const response = await fetch(url, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
-        });
-
-        const data = await response.json();
-
-        const ratingText = data.candidates?.[0]?.content?.parts?.[0]?.text;
-        if (!ratingText) return 5; // Default average if fails
-
-        const rating = parseInt(ratingText.trim());
-        return isNaN(rating) ? 5 : Math.max(1, Math.min(10, rating));
-
-    } catch (error) {
-        console.error("Gemini API Error:", error);
-        return 0; // 0 indicates failure/unrated
-    }
-}

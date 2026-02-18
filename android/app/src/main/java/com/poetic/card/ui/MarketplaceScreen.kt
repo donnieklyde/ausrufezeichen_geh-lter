@@ -44,7 +44,6 @@ data class MarketItem(
     val price: String,
     val owner: String,
     val isListed: Boolean = true,
-    val aiRating: Int = 0
 )
 
 // Mock Data
@@ -72,7 +71,6 @@ fun MarketplaceScreen() {
                     price = card.price.toString(),
                     owner = card.owner?.username ?: "Unknown",
                     isListed = card.isListed,
-                    aiRating = card.aiRating
                 )
             }
         } catch (e: Exception) {
@@ -147,14 +145,6 @@ fun MarketCard(item: MarketItem) {
                     fontSize = 14.sp,
                     maxLines = 2
                 )
-                if (item.aiRating > 0) {
-                    Text(
-                        text = "✨ ${item.aiRating}/10",
-                        color = Color(0xFFCE93D8), // Purple 200
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 12.sp
-                    )
-                }
                 Text(
                     text = "$${item.price}",
                     color = Color.Yellow,

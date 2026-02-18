@@ -8,7 +8,6 @@ data class Card(
     val ownerId: String,
     val isListed: Boolean = false,
     val copies: Int = 1,
-    val aiRating: Int = 0,
     val updatedAt: String? = null,
     val owner: UserDto? = null
 )
