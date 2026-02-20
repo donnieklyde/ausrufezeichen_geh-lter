@@ -1,5 +1,6 @@
 package com.poetic.card.ui
 
+import android.app.DownloadManager
 import android.content.ContentValues
 import android.content.Context
 import android.graphics.Bitmap
@@ -8,35 +9,39 @@ import android.os.Build
 import android.os.Environment
 import android.provider.MediaStore
 import android.widget.Toast
+import androidx.core.graphics.drawable.toBitmap
+import coil.imageLoader
+import coil.request.ImageRequest
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -45,16 +50,8 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
-import coil.ImageLoader
 import coil.compose.rememberAsyncImagePainter
-import coil.request.ImageRequest
-import coil.request.SuccessResult
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
-import java.io.OutputStream
 import kotlin.math.absoluteValue
 
 @Composable
@@ -69,9 +66,19 @@ fun CardDetailScreen(
     // Shine Effect State
     var shineOffset by remember { mutableStateOf(Offset.Zero) }
 
-    val interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() }
+    val interactionSource = remember { MutableInteractionSource() }
     val context = LocalContext.current
-    val coroutineScope = rememberCoroutineScope()
+    
+    // Permission launcher for Android < 10
+    val permissionLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { isGranted: Boolean ->
+        if (isGranted) {
+            downloadImage(context, imageUrl)
+        } else {
+            Toast.makeText(context, "Permission needed to save image", Toast.LENGTH_SHORT).show()
+        }
+    }
 
     Box(
         modifier = Modifier
@@ -100,10 +107,6 @@ fun CardDetailScreen(
                     rotationY += dragAmount.x * sensitivity
                     rotationX -= dragAmount.y * sensitivity // Invert Y for natural feel
                     
-                    // No limits on rotation as requested
-                    // rotationY = rotationY.coerceIn(-20f, 20f)
-                    // rotationX = rotationX.coerceIn(-20f, 20f)
-                    
                     // Shine moves opposite to rotation to simulate reflection
                     val shineSensitivity = 5f
                     shineOffset += Offset(dragAmount.x * shineSensitivity, dragAmount.y * shineSensitivity)
@@ -111,11 +114,13 @@ fun CardDetailScreen(
             },
         contentAlignment = Alignment.Center
     ) {
-        // Save Button (Using Share icon as Download might be missing in core)
+        // Save Button
         IconButton(
             onClick = {
-                coroutineScope.launch {
-                    saveImageToGallery(context, imageUrl)
+                if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
+                    permissionLauncher.launch(android.Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                } else {
+                    downloadImage(context, imageUrl)
                 }
             },
             modifier = Modifier
@@ -134,15 +139,6 @@ fun CardDetailScreen(
         ) {
             Icon(Icons.Default.Close, contentDescription = "Close", tint = Color.White)
         }
-        
-        // Debug Text
-        /*
-        androidx.compose.material3.Text(
-             text = imageUrl,
-             color = Color.Red,
-             modifier = Modifier.align(Alignment.TopCenter).padding(top = 40.dp)
-        )
-        */
         
         val density = LocalDensity.current.density
         val elevationPx = with(LocalDensity.current) { 20.dp.toPx() }
@@ -166,7 +162,7 @@ fun CardDetailScreen(
             // Card Image
             Image(
                 painter = rememberAsyncImagePainter(
-                    model = imageUrl // Navigation decoded it already
+                    model = imageUrl
                 ),
                 contentDescription = null,
                 contentScale = ContentScale.Crop,
@@ -174,7 +170,6 @@ fun CardDetailScreen(
             )
             
             // Shine Overlay
-            // A gradient that moves based on tilt
             val shineBrush = Brush.linearGradient(
                 colors = listOf(
                     Color.Transparent,
@@ -191,7 +186,7 @@ fun CardDetailScreen(
                     .background(shineBrush)
             )
             
-            // Specular Highlight for corners (subtle)
+            // Specular Highlight
             Box(
                  modifier = Modifier
                     .fillMaxSize()
@@ -202,7 +197,7 @@ fun CardDetailScreen(
                                 Color.Transparent
                             ),
                             center = Offset(
-                                x = if (rotationY > 0) 0f else Float.POSITIVE_INFINITY, // Light source logic
+                                x = if (rotationY > 0) 0f else Float.POSITIVE_INFINITY,
                                 y = if (rotationX > 0) 0f else Float.POSITIVE_INFINITY
                             ),
                             radius = 500f
@@ -213,56 +208,87 @@ fun CardDetailScreen(
     }
 }
 
-suspend fun saveImageToGallery(context: Context, imageUrl: String) {
-    try {
-        withContext(Dispatchers.IO) {
-            val loader = ImageLoader(context)
+fun downloadImage(context: Context, imageUrl: String) {
+    Toast.makeText(context, "Saving image...", Toast.LENGTH_SHORT).show()
+    
+    CoroutineScope(Dispatchers.IO).launch {
+        try {
             val request = ImageRequest.Builder(context)
                 .data(imageUrl)
-                .allowHardware(false) // Disable hardware bitmaps for saving
                 .build()
 
-            val result = (loader.execute(request) as? SuccessResult)?.drawable
-            val bitmap = (result as? android.graphics.drawable.BitmapDrawable)?.bitmap
-
-            if (bitmap != null) {
-                val filename = "poetic_card_${System.currentTimeMillis()}.jpg"
-                var fos: OutputStream? = null
-                var uri: Uri? = null
-
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                    val resolver = context.contentResolver
-                    val contentValues = ContentValues().apply {
-                        put(MediaStore.MediaColumns.DISPLAY_NAME, filename)
-                        put(MediaStore.MediaColumns.MIME_TYPE, "image/jpeg")
-                        put(MediaStore.MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_PICTURES + "/PoeticCards")
-                    }
-                    uri = resolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, contentValues)
-                    fos = uri?.let { resolver.openOutputStream(it) }
-                } else {
-                    // For legacy versions, simplistic approach (scoped storage might require more handling)
-                    // But assume targets API 29+ mostly or use simple external storage if permitted
-                    val imagesDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES)
-                    val image = java.io.File(imagesDir, filename)
-                    fos = java.io.FileOutputStream(image)
+            val result = context.imageLoader.execute(request)
+            
+            if (result is coil.request.SuccessResult) {
+                val bitmap = result.drawable.toBitmap()
+                saveBitmapToGallery(context, bitmap)
+                withContext(Dispatchers.Main) {
+                    Toast.makeText(context, "Image saved to gallery", Toast.LENGTH_SHORT).show()
                 }
-
-                fos?.use {
-                    bitmap.compress(Bitmap.CompressFormat.JPEG, 100, it)
-                    withContext(Dispatchers.Main) {
-                        Toast.makeText(context, "Saved to Gallery!", Toast.LENGTH_SHORT).show()
-                    }
+            } else if (result is coil.request.ErrorResult) {
+                val errorMsg = result.throwable.message ?: "Unknown Coil error"
+                withContext(Dispatchers.Main) {
+                    Toast.makeText(context, "Failed to load image: $errorMsg", Toast.LENGTH_LONG).show()
                 }
             } else {
-                 withContext(Dispatchers.Main) {
-                    Toast.makeText(context, "Failed to load image", Toast.LENGTH_SHORT).show()
+                withContext(Dispatchers.Main) {
+                    Toast.makeText(context, "Failed to load image for saving", Toast.LENGTH_SHORT).show()
                 }
             }
+        } catch (e: Exception) {
+            e.printStackTrace()
+            withContext(Dispatchers.Main) {
+                Toast.makeText(context, "Save failed: ${e.message}", Toast.LENGTH_LONG).show()
+            }
         }
-    } catch (e: Exception) {
-        e.printStackTrace()
-        withContext(Dispatchers.Main) {
-            Toast.makeText(context, "Save failed: ${e.message}", Toast.LENGTH_SHORT).show()
+    }
+}
+
+fun saveBitmapToGallery(context: Context, bitmap: Bitmap) {
+    val filename = "card_${System.currentTimeMillis()}.jpg"
+    
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+        val contentValues = ContentValues().apply {
+            put(MediaStore.MediaColumns.DISPLAY_NAME, filename)
+            put(MediaStore.MediaColumns.MIME_TYPE, "image/jpeg")
+            put(MediaStore.MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_PICTURES + "/PoeticCards")
+            put(MediaStore.MediaColumns.IS_PENDING, 1)
         }
+
+        val resolver = context.contentResolver
+        val uri = resolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, contentValues)
+            ?: throw Exception("Failed to create MediaStore entry")
+
+        resolver.openOutputStream(uri)?.use { outputStream ->
+            if (!bitmap.compress(Bitmap.CompressFormat.JPEG, 100, outputStream)) {
+                throw Exception("Failed to compress bitmap")
+            }
+        } ?: throw Exception("Failed to open output stream")
+
+        contentValues.clear()
+        contentValues.put(MediaStore.MediaColumns.IS_PENDING, 0)
+        resolver.update(uri, contentValues, null, null)
+    } else {
+        val imagesDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES)
+        val poeticDir = java.io.File(imagesDir, "PoeticCards")
+        if (!poeticDir.exists()) {
+            poeticDir.mkdirs()
+        }
+        val imageFile = java.io.File(poeticDir, filename)
+        val fos = java.io.FileOutputStream(imageFile)
+        if (!bitmap.compress(Bitmap.CompressFormat.JPEG, 100, fos)) {
+            fos.close()
+            throw Exception("Failed to compress bitmap")
+        }
+        fos.flush()
+        fos.close()
+
+        // Inform the media scanner
+        android.media.MediaScannerConnection.scanFile(
+            context,
+            arrayOf(imageFile.absolutePath),
+            arrayOf("image/jpeg"),
+            null
+        )
     }
 }

@@ -74,7 +74,7 @@ fun MarketplaceScreen(
                     text = card.text,
                     // Use 10.0.2.2 or local IP if running on emulator/device
                     imageUrl = if (card.backgroundUrl.startsWith("/")) "${NetworkModule.BASE_URL}${card.backgroundUrl.removePrefix("/")}" else card.backgroundUrl,
-                    price = card.price.toString(),
+                    price = String.format("%.2f", card.price),
                     owner = card.owner?.username ?: "Unknown",
                     isListed = card.isListed,
                 )
@@ -91,12 +91,6 @@ fun MarketplaceScreen(
             .fillMaxSize()
             .padding(16.dp)
     ) {
-        Text(
-            text = "Marketplace",
-            style = MaterialTheme.typography.headlineMedium,
-            modifier = Modifier.padding(bottom = 16.dp)
-        )
-
         if (isLoading) {
             Text("Loading...", modifier = Modifier.align(Alignment.CenterHorizontally))
         } else {

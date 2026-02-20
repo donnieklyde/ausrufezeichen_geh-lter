@@ -67,7 +67,7 @@ fun ProfileScreen(
                                     id = card.id,
                                     text = card.text,
                                     imageUrl = if (card.backgroundUrl.startsWith("/")) "${NetworkModule.BASE_URL}${card.backgroundUrl.removePrefix("/")}" else card.backgroundUrl,
-                                    price = card.price.toString(),
+                                    price = String.format("%.2f", card.price),
                                     owner = card.owner?.username ?: "You",
                                     isListed = card.isListed
                                 )
@@ -94,12 +94,6 @@ fun ProfileScreen(
             .fillMaxSize()
             .padding(16.dp)
     ) {
-        Text(
-            text = "My Collection",
-            style = MaterialTheme.typography.headlineMedium,
-            modifier = Modifier.padding(bottom = 16.dp)
-        )
-        
         Button(
             onClick = onLogout,
             modifier = Modifier.align(Alignment.End)
@@ -134,7 +128,7 @@ fun ProfileScreen(
                                                 id = card.id,
                                                 text = card.text,
                                                 imageUrl = if (card.backgroundUrl.startsWith("/")) "${NetworkModule.BASE_URL}${card.backgroundUrl.removePrefix("/")}" else card.backgroundUrl,
-                                                price = card.price.toString(),
+                                                price = String.format("%.2f", card.price),
                                                 owner = card.owner?.username ?: "You",
                                                 isListed = card.isListed,
                                             )
